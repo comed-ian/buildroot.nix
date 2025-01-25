@@ -26,14 +26,23 @@ def is_http_download(uri: str) -> bool:
     return uri.split("+", maxsplit=1)[0].startswith("http")
 
 
+def is_git_download(uri: str) -> bool:
+    return uri.split("+", maxsplit=1)[0].startswith("git")
+
 def create_download_info(
     checksums_index: T.Dict[str, DownloadInfo], package_info: T.Dict
 ) -> T.Dict:
     result = {}
 
     for package in package_info.values():
+
         for download in package.get("downloads", []):
             source = download["source"]
+            git_uri = ""
+            for uri in download["uris"]:
+                    if is_git_download(uri):
+                        git_uri = uri.split("+", maxsplit=1)[-1]
+                        break
             uris = [
                 uri.split("+", maxsplit=1)[-1] + "/" + source
                 for uri in download["uris"]
@@ -48,6 +57,8 @@ def create_download_info(
             result[source] = dict(
                 uris=uris, algo=download_info.algo, checksum=download_info.checksum
             )
+            if git_uri != "":
+                result[source]["git"] = git_uri
 
     return result
 

@@ -11,7 +11,7 @@
   defconfig,
   lockfile,
   nativeBuildInputs ? [],
-  extraSha256Hashes ? {},
+  extraShaHashes ? {},
 }: let
   inherit (pkgs) stdenv;
   externalDeclaration =
@@ -36,6 +36,7 @@
           bc
           cpio
           file
+          git
           libxcrypt
           perl
           rsync
@@ -65,14 +66,31 @@
 
     hardeningDisable = ["format"];
   };
+  fetchSourceWithSsh = file: lockedAttrs: pkgs.stdenv.mkDerivation {
+    name = file;
+    src = builtins.fetchGit {
+      url = lockedAttrs.git;
+      name = "${file}";
+      rev = "${lockedAttrs.checksum}";
+      allRefs = true;
+    };
+    buildPhase = ''
+      tar -czf ${file} ./*
+    '';
+    installPhase = ''
+      mv ${file} $out
+    '';
+  };
   lockedPackageInputs = let
     lockedInputs = builtins.fromJSON (builtins.readFile lockfile);
     symlinkCommands = builtins.map (
       file: let
         lockedAttrs = lockedInputs.${file};
-        input = pkgs.fetchurl {
+        input = if builtins.hasAttr "git" lockedAttrs
+        then fetchSourceWithSsh file lockedAttrs
+        else pkgs.fetchurl {
           name = file;
-          urls = lockedInputs.${file}.uris;
+          urls = lockedAttrs.uris;
           hash = "${lockedAttrs.algo}:${lockedAttrs.checksum}";
         };
       in "ln -s ${input} $out/'${file}'"
@@ -108,10 +126,10 @@ in rec {
     dontConfigure = true;
     patchPhase = builtins.concatStringsSep "\n" (pkgs.lib.attrsets.mapAttrsToList (
         source: hash: ''
-          echo "sha256  ${hash}  ${source}" >> package/added.hash
+          echo "${hash.algo}  ${hash.hash}  ${source}" >> package/added.hash
         ''
       )
-      extraSha256Hashes);
+      extraShaHashes);
 
     buildPhase = ''
       python3 ${./make-package-lock.py} \
