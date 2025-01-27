@@ -66,7 +66,7 @@
 
     hardeningDisable = ["format"];
   };
-  fetchSourceWithSsh = file: lockedAttrs: pkgs.stdenv.mkDerivation {
+  fetchSourceGit = file: lockedAttrs: pkgs.stdenv.mkDerivation {
     name = file;
     src = builtins.fetchGit {
       url = lockedAttrs.git;
@@ -81,13 +81,27 @@
       mv ${file} $out
     '';
   };
+  fetchSourceLocal = file: lockedAttrs: pkgs.stdenv.mkDerivation {
+    name = file;
+    src = /${lockedAttrs.local};
+    buildPhase = ''
+      echo "Building local tarball"
+      tar -czf ${file}.tar.gz ./*
+    '';
+    installPhase = ''
+      mv ${file}.tar.gz $out
+      echo "Done installing local tarball"
+    '';
+  };
   lockedPackageInputs = let
     lockedInputs = builtins.fromJSON (builtins.readFile lockfile);
     symlinkCommands = builtins.map (
       file: let
         lockedAttrs = lockedInputs.${file};
         input = if builtins.hasAttr "git" lockedAttrs
-        then fetchSourceWithSsh file lockedAttrs
+        then fetchSourceGit file lockedAttrs
+        else if builtins.hasAttr "local" lockedAttrs
+        then fetchSourceLocal file lockedAttrs
         else pkgs.fetchurl {
           name = file;
           urls = lockedAttrs.uris;

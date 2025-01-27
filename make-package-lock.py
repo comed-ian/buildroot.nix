@@ -25,6 +25,8 @@ def is_http_download(uri: str) -> bool:
     # Note that this should handle both http and https with or without '|urlencode'.
     return uri.split("+", maxsplit=1)[0].startswith("http")
 
+def is_local_download(uri: str) -> bool:
+    return uri.split("+", maxsplit=1)[0].startswith("local")
 
 def is_git_download(uri: str) -> bool:
     return uri.split("+", maxsplit=1)[0].startswith("git")
@@ -39,10 +41,14 @@ def create_download_info(
         for download in package.get("downloads", []):
             source = download["source"]
             git_uri = ""
+            local_uri = ""
             for uri in download["uris"]:
-                    if is_git_download(uri):
-                        git_uri = uri.split("+", maxsplit=1)[-1]
-                        break
+                if is_git_download(uri):
+                    git_uri = uri.split("+", maxsplit=1)[-1]
+                    break
+                elif is_local_download(uri):
+                    local_uri = uri.split("+", maxsplit=1)[-1]
+                    break
             uris = [
                 uri.split("+", maxsplit=1)[-1] + "/" + source
                 for uri in download["uris"]
@@ -59,6 +65,8 @@ def create_download_info(
             )
             if git_uri != "":
                 result[source]["git"] = git_uri
+            elif local_uri != "":
+                result[source]["local"] = local_uri
 
     return result
 
