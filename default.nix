@@ -8,7 +8,7 @@
   src,
   externalSrc ? null,
   patchSrc ? null,
-  defconfig,
+  defconfig ? null,
   lockfile,
   nativeBuildInputs ? [],
   extraShaHashes ? {},
@@ -57,10 +57,10 @@
     '';
 
     configurePhase = ''
-      ${makeFHSEnv}/bin/make-with-fhs-env ${envDeclarations} ${
-        if builtins.isPath defconfig
-        then "defconfig BR2_DEFCONFIG=${defconfig}"
-        else defconfig
+      ${makeFHSEnv}/bin/make-with-fhs-env ${envDeclarations} defconfig ${
+        if defconfig == null
+        then ""
+        else "BR2_DEFCONFIG=${defconfig}"
       }
     '';
 
