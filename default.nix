@@ -172,7 +172,7 @@ in rec {
             ln -s $lockedInput "$BR2_DL_DIR/$(basename $lockedInput)"
         done
 
-        ${makeFHSEnv}/bin/make-with-fhs-env BR2_JLEVEL=$NIX_BUILD_CORES ${envDeclarations} usb_manager-show-depends
+        ${makeFHSEnv}/bin/make-with-fhs-env BR2_JLEVEL=$NIX_BUILD_CORES ${envDeclarations} usb_manager-show-recursive-depends
         # ${makeFHSEnv}/bin/make-with-fhs-env BR2_JLEVEL=$NIX_BUILD_CORES ${envDeclarations} sdk
       '';
 
