@@ -85,12 +85,10 @@
     name = file;
     src = /${lockedAttrs.local};
     buildPhase = ''
-      echo "Building local tarball"
       tar -czf ${file}.tar.gz ./*
     '';
     installPhase = ''
       mv ${file}.tar.gz $out
-      echo "Done installing local tarball"
     '';
   };
   lockedPackageInputs = let
@@ -173,7 +171,7 @@ in rec {
         done
 
         ${makeFHSEnv}/bin/make-with-fhs-env BR2_JLEVEL=$NIX_BUILD_CORES ${envDeclarations}
-        # ${makeFHSEnv}/bin/make-with-fhs-env BR2_JLEVEL=$NIX_BUILD_CORES ${envDeclarations} sdk
+        ${makeFHSEnv}/bin/make-with-fhs-env BR2_JLEVEL=$NIX_BUILD_CORES ${envDeclarations} sdk
       '';
 
       installPhase = ''
